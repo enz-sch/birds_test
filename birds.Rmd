@@ -14,35 +14,72 @@ library(tidyverse)
 ```
 
 ## Introduction
+Reading in the birds.csv data. This is morphological, ecological and geographical data for all birds taken from AVONET
 
-Write some text here about what you are doing. Show the code for reading in the `birds.csv` file. Explain the data and where it is from.
-
-```{r code_block1}
-# add some code
+```{r read_csv, eval=T}
+birds <- read_csv("birds.csv")
 ```
 
 ## Plotting size relationships
+This is a plot of the relationship between [tarsus length](https://en.wikipedia.org/wiki/Bird_measurement#Tarsus) and [wing length](https://en.wikipedia.org/wiki/Bird_measurement#Wing).
 
-Here I want you to plot the relationship between [tarsus length](https://en.wikipedia.org/wiki/Bird_measurement#Tarsus) and [wing length](https://en.wikipedia.org/wiki/Bird_measurement#Wing). Write some text explaining the plot. Show your code.
+```{r graph}
+ggplot(birds, aes(Tarsus.Length, Wing.Length)) + geom_point()
+```
 
-Are there any outliers with a very long tarsus but very short wings? Can you identify them? Hint, you can use `filter` to do this, `pull(Species2_ebird)` will give the species name from the [eBird database](https://ebird.org/home) - but you can use any of the species names columns for this.
+There are some outliers in this data. Some birds have very long tarsi and very short wings. This code identifies them by filtering birds that have tarsi length >200mm and wing length <300mm
+```{r outliers}
+birds %>%
+  filter(Tarsus.Length > 200 & Wing.Length < 300) %>%
+  pull(Species2_eBird) %>% unique()
+```
 
 ## Write a function
-
-Nearly all of the phenotypic measurements in this dataset are in millimetres. Write a function to convert them to centimetres. Show the code below. 
+This is a function to convert the measurements in the dataset from millimeters to centimeters
+```{r function}
+mm_to_cm <- function(x){
+  return(x/10)
+}
+head(mm_to_cm(birds$Tarsus.Length), 10)
+```
 
 ## Some bird queries
 
-Which bird has the longest beak? Does it differ between culmen (from base of beak entering skull) or nares (from the nostril) measurements? Show the code below and make sure you return **only the top hits** from each measurement - nb. `head()` will help here.
+Which bird has the longest beak? Does it differ between culmen (from base of beak entering skull) or nares (from the nostril) measurements? The code below will return **only the top hits** from each measurement.
+
+```{r longest_beak}
+birds %>%
+  arrange(desc(Beak.Length_Culmen))%>%
+  head(10) %>%
+  select(Species2_eBird, Beak.Length_Culmen)
+
+birds %>%
+  arrange(desc(Beak.Length_Nares))%>%
+  head(10) %>%
+  select(Species2_eBird, Beak.Length_Nares)
+```
+
+Pelecanus conspicillatus has the longest beak both measured by the culmen and the nares.
+
 
 ## Crows, ravens and magpies
 
 Filter your dataset to include only common crows (*Corvus corone*), ravens (*Corvus corax*) and magpies (*Pica pica*). The code below is intended as a hint:
 
-```{r code_block2, echo = TRUE, eval = FALSE}
-filter(species == "A" | species == "B" | species == "C") 
+```{r code_block2, echo = TRUE}
+birds_2 <- birds %>%
+  filter(Species2_eBird == "Corvus corone" | Species2_eBird == "Corvus corax" | Species2_eBird == "Pica pica") 
 ```
 
-Now draw a `ggplot2` boxplot of the beak length and depth distributions of these samples. Which species has the deepest beak? And which has the longest? **NB. Use culmen length here**
+Drawing a `ggplot2` boxplot of the beak length and depth distributions of these samples. 
+
+```{r boxplot}
+ggplot(birds_2, aes(Beak.Length_Culmen)) + geom_boxplot()
+arrange(birds_2, desc(Beak.Length_Culmen))
+
+ggplot(birds_2, aes(Beak.Depth)) + geom_boxplot()
+arrange(birds_2, desc(Beak.Depth))
+```
+Corvus corax has the longest beak length and beak depth
 
 
